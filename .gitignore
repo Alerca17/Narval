@@ -15,14 +15,25 @@ venv/
 node_modules/
 narval-frontend/node_modules/
 narval-frontend/dist/
+dist/
 .npm
 *.tsbuildinfo
 
 # Secret Environment Variables
 .env
+*.env
+.env.*
+.env.local
+.env.*.local
 narval-backend/.env
+narval-frontend/.env
+narval-frontend/.env.local
+
+# Preserve example templates
 !.env.example
+!*.env.example
 !narval-backend/.env.example
+!narval-frontend/.env.example
 
 # IDE & OS
 .vscode/

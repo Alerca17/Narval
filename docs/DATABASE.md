@@ -8,8 +8,8 @@ Supabase provee dos modalidades de conexión:
 
 ### Cadena de Conexión en SQLAlchemy 2
 En Python utilizamos el driver moderno `psycopg` (versión 3):
-- Aplicación: `postgresql+psycopg://postgres.guutvfsyawucvvsifaoe:[PASSWORD]@aws-0-us-east-1.pooler.supabase.com:5432/postgres` (o 6543)
-- Migraciones Alembic: `postgresql+psycopg://postgres.guutvfsyawucvvsifaoe:[PASSWORD]@aws-0-us-east-1.pooler.supabase.com:5432/postgres`
+- Aplicación: `postgresql+psycopg://postgres.[PROJECT_REF]:[PASSWORD]@aws-0-us-east-1.pooler.supabase.com:5432/postgres` (o 6543)
+- Migraciones Alembic: `postgresql+psycopg://postgres.[PROJECT_REF]:[PASSWORD]@aws-0-us-east-1.pooler.supabase.com:5432/postgres`
 
 ---
 

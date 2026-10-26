@@ -1,0 +1,4 @@
+# firmware/.gitignore
+config.py
+*.pyc
+__pycache__/
