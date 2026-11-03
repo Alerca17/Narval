@@ -1,9 +1,12 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { useMeasurements } from './hooks/useMeasurements';
 import { useDeviceStatus } from './hooks/useDeviceStatus';
+import { useAIAnalysis } from './hooks/useAIAnalysis';
 import { ApiService } from './services/api';
 import { ChartsView } from './presentation/ChartsView';
-import type { AlertItem, DeviceStatus, Measurement, VirtualSemaforo } from './types';
+import { AIPanel } from './presentation/AIPanel';
+import type { AIAnalysis, AlertItem, DeviceStatus, Measurement, VirtualSemaforo } from './types';
+import type { SensorErrorDetail } from './hooks/useAIAnalysis';
 
 type View = 'inicio' | 'metricas' | 'alertas' | 'dispositivo';
 type IconName =
@@ -190,7 +193,25 @@ function MetricsScreen({ metrics, history, latest }: {
   );
 }
 
-function AlertsScreen({ alerts }: { alerts: AlertItem[] }) {
+function AlertsScreen({
+  alerts,
+  latest,
+  analysis,
+  aiLoading,
+  aiError,
+  structuredError,
+  requestAnalysis,
+  hasSensorAlerts,
+}: {
+  alerts: AlertItem[];
+  latest: Measurement | null;
+  analysis: AIAnalysis | null;
+  aiLoading: boolean;
+  aiError: string | null;
+  structuredError: SensorErrorDetail | null;
+  requestAnalysis: (measurementId?: number, count?: number) => void;
+  hasSensorAlerts: boolean;
+}) {
   const [selected, setSelected] = useState<number | null>(null);
   const list = alerts.length ? alerts : [];
   const currentAlert = selected === null ? null : list.find((alert) => alert.id === selected) ?? null;
@@ -208,11 +229,16 @@ function AlertsScreen({ alerts }: { alerts: AlertItem[] }) {
           <h1>{currentAlert.parameter_name.toUpperCase()} fuera de rango</h1>
           <p>{currentAlert.message}</p>
           <div className="reading-comparison"><div><span>Lectura detectada</span><strong>{currentAlert.observed_value ?? '--'} <small>{currentAlert.parameter_name === 'pH' ? 'pH' : currentAlert.parameter_name === 'turbidity' ? 'NTU' : '°C'}</small></strong></div><i /><div><span>Referencia</span><strong>{currentAlert.threshold_reference ?? 'Límite'} </strong></div></div>
-          <div className="recommendation">
-            <Icon name="shield" size={26} />
-            <div><strong>Acción recomendada</strong><p>Revisa el sensor y valida la lectura antes de continuar la operación normal del sistema.</p></div>
-          </div>
-          <div className="detail-actions"><button className="primary-button" onClick={() => setSelected(null)}><Icon name="arrow" size={17} /> Volver al historial</button></div>
+          <AIPanel
+            analysis={analysis?.measurement_id === (currentAlert.measurement_id ?? latest?.id) ? analysis : null}
+            loading={aiLoading}
+            error={aiError}
+            structuredError={structuredError}
+            onRequestAnalysis={() => requestAnalysis(currentAlert.measurement_id ?? latest?.id, 5)}
+            hasMeasurements={Boolean(currentAlert.measurement_id ?? latest)}
+            hasSensorAlerts={hasSensorAlerts}
+          />
+          <div className="detail-actions"><button className="secondary-button" onClick={() => setSelected(null)}><Icon name="arrow" size={17} /> Volver al historial</button></div>
         </div>
       </div>
     );
@@ -279,10 +305,12 @@ function DeviceScreen({ devices, latest }: { devices: DeviceStatus[]; latest: Me
 }
 
 export default function App() {
-  const { latest, semaforo, history, loading, error, refreshAll } = useMeasurements(10000);
+  const { latest, semaforo, aiAnalysis, history, loading, error, refreshAll } = useMeasurements(10000);
   const { devices } = useDeviceStatus(15000);
+  const { analysis: requestedAnalysis, loading: aiLoading, error: aiError, structuredError, requestAnalysis } = useAIAnalysis();
   const [view, setView] = useState<View>('inicio');
   const [alerts, setAlerts] = useState<AlertItem[]>([]);
+  const currentAnalysis = requestedAnalysis || aiAnalysis;
 
   useEffect(() => {
     ApiService.getAlerts().then((res) => setAlerts(res.items)).catch(() => setAlerts([]));
@@ -299,7 +327,13 @@ export default function App() {
       { label: 'Temperatura', value: valueTemp, unit: '°C', range: metricRanges.temperature, icon: 'thermometer' as IconName, color: 'orange' },
     ];
   }, [latest]);
-
+  const hasSensorAlerts = Boolean(
+    latest?.quality_status === 'SENSOR_ERROR' ||
+    latest?.validation_notes?.includes('DISCONNECTED') ||
+    latest?.validation_notes?.includes('SATURATED') ||
+    latest?.temperature_celsius === null ||
+    latest?.ph_raw === 4095
+  );
   const navItems = useMemo(() => [
     { view: 'inicio' as View, icon: 'home' as IconName, label: 'Inicio' },
     { view: 'metricas' as View, icon: 'chart' as IconName, label: 'Métricas' },
@@ -349,7 +383,18 @@ export default function App() {
 
         {view === 'inicio' && <HomeScreen goTo={navigate} metrics={metrics} latest={latest} semaforo={semaforo} history={history} />}
         {view === 'metricas' && <MetricsScreen metrics={metrics} history={history} latest={latest} />}
-        {view === 'alertas' && <AlertsScreen alerts={alerts} />}
+        {view === 'alertas' && (
+          <AlertsScreen
+            alerts={alerts}
+            latest={latest}
+            analysis={currentAnalysis}
+            aiLoading={aiLoading}
+            aiError={aiError}
+            structuredError={structuredError}
+            requestAnalysis={requestAnalysis}
+            hasSensorAlerts={hasSensorAlerts}
+          />
+        )}
         {view === 'dispositivo' && <DeviceScreen devices={devices} latest={latest} />}
 
         <footer><Brand /><span>Monitoreo inteligente para agua segura · Proyecto Narval © 2026</span></footer>
