@@ -8,7 +8,7 @@ interface AIPanelProps {
   loading: boolean;
   error: string | null;
   structuredError?: SensorErrorDetail | null;
-  onRequestAnalysis: () => void;
+  onRequestAnalysis: (measurementId?: number) => void;
   hasMeasurements: boolean;
   hasSensorAlerts?: boolean;
 }
@@ -32,13 +32,13 @@ export const AIPanel: React.FC<AIPanelProps> = ({
           <div>
             <h3>Análisis Técnico y Descriptivo — Google Gemini</h3>
             <p className="ai-subtitle">
-              Genera una interpretación de calidad de agua sobre mediciones reales validadas.
+              Genera un informe para la medición asociada a esta alerta.
             </p>
           </div>
         </div>
 
         <button
-          onClick={onRequestAnalysis}
+          onClick={() => onRequestAnalysis()}
           disabled={loading || !hasMeasurements}
           className="btn-ai-analyze"
         >
@@ -50,7 +50,7 @@ export const AIPanel: React.FC<AIPanelProps> = ({
           ) : (
             <>
               <Brain size={16} />
-              <span>Crear Reporte con Gemini</span>
+              <span>Generar informe</span>
             </>
           )}
         </button>
@@ -61,7 +61,7 @@ export const AIPanel: React.FC<AIPanelProps> = ({
         <div className="sensor-warning-pill">
           <AlertTriangle size={18} className="text-yellow" />
           <span>
-            <strong>Atención:</strong> Uno o más sensores reportan fallos o saturación. Si presionas crear reporte, el sistema validará la condición física antes de invocar a Gemini.
+            <strong>Atención:</strong> Uno o más sensores reportan fallos o saturación. Al generar el informe, el sistema validará la condición antes de consultar a Gemini.
           </span>
         </div>
       )}
@@ -116,7 +116,7 @@ export const AIPanel: React.FC<AIPanelProps> = ({
         <div className="ai-empty-prompt">
           <FileText size={38} className="text-gray" />
           <p>
-            Presiona el botón <strong>"Crear Reporte con Gemini"</strong> cuando desees que la IA evalúe la medición actual.
+            Presiona <strong>"Generar informe"</strong> para obtener recomendaciones basadas en esta alerta.
           </p>
           <span className="ai-empty-hint">
             Validará la integridad de los sensores de pH, turbidez y temperatura antes de emitir la consulta para proteger tu cuota.
