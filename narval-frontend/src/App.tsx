@@ -228,7 +228,7 @@ function AlertsScreen({
           <span className="eyebrow">Alerta activa · {new Date(currentAlert.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
           <h1>{currentAlert.parameter_name.toUpperCase()} fuera de rango</h1>
           <p>{currentAlert.message}</p>
-          <div className="reading-comparison"><div><span>Lectura detectada</span><strong>{currentAlert.observed_value ?? '--'} <small>{currentAlert.parameter_name === 'pH' ? 'pH' : currentAlert.parameter_name === 'turbidity' ? 'NTU' : '°C'}</small></strong></div><i /><div><span>Referencia</span><strong>{currentAlert.threshold_reference ?? 'Límite'} </strong></div></div>
+          <div className="reading-comparison"><div><span>Lectura detectada</span><strong>{currentAlert.observed_value ?? '--'} <small>{currentAlert.parameter_name.toLowerCase() === 'ph' ? 'pH' : currentAlert.parameter_name.toLowerCase() === 'turbidity' ? 'NTU' : '°C'}</small></strong></div><i /><div><span>Referencia</span><strong>{currentAlert.threshold_reference ?? 'Límite'} </strong></div></div>
           <AIPanel
             analysis={analysis?.measurement_id === (currentAlert.measurement_id ?? latest?.id) ? analysis : null}
             loading={aiLoading}

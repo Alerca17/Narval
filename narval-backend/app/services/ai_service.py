@@ -16,7 +16,7 @@ ESP32_FLAG_MESSAGES = {
     "TEMP_POWER_OR_BUS_ERROR": "Sensor de temperatura (DS18B20): Fallo de alimentación o bus OneWire (lectura de 85°C o -127°C).",
     "TEMP_READ_EXCEPTION": "Sensor de temperatura (DS18B20): Excepción eléctrica al consultar la sonda.",
     "TEMP_OUTSIDE_PHYSICAL_RANGE": "Sensor de temperatura (DS18B20): Lectura térmica anómala fuera de rango físico admisible (0°C - 50°C).",
-    "PH_ADC_SATURATED_OR_DISCONNECTED": "Sensor de pH: Electrodo saturado o desconectado (ADC en 4095). Revisa que la sonda BNC esté ajustada, que el módulo PH-4502C esté alimentado y comparta tierra (GND) con el ESP32.",
+    "PH_ADC_SATURATED_OR_DISCONNECTED": "Sensor de pH: Electrodo saturado o desconectado (ADC en 4095, GPIO 34). Revisa que la sonda BNC esté ajustada, que el módulo PH-4502C esté alimentado y comparta tierra (GND) con el ESP32.",
     "TURBIDITY_SENSOR_DISCONNECTED": "Sensor de turbidez: Módulo óptico desconectado (ADC <= 5). Verifica la alimentación y el pin analógico en GPIO 36.",
     "PH_OUTSIDE_PHYSICAL_RANGE": "Sensor de pH: Valor fuera de escala física admisible (0.0 a 14.0).",
     "TURBIDITY_OUTSIDE_PHYSICAL_RANGE": "Sensor de turbidez: Valor de turbidez fuera de escala física.",
@@ -102,7 +102,7 @@ class AIService:
                     "title": "Sensores no disponibles para análisis con Gemini",
                     "message": "No es posible solicitar el reporte con inteligencia artificial porque uno o más sensores presentan fallas, desconexión física o lecturas saturadas.",
                     "sensor_errors": sensor_errors,
-                    "action_required": "Por favor revisa el cableado físico de los sensores en el ESP32 (COM7), verifica la masa común GND y que la sonda BNC de pH y el DS18B20 estén conectados firmemente."
+                    "action_required": "Por favor revisa el cableado físico de los sensores en el ESP32 (pH GPIO 34, turbidez GPIO 36, DS18B20 GPIO 26), verifica la masa común GND y que la sonda BNC de pH y el DS18B20 estén conectados firmemente."
                 }
             )
 

@@ -64,6 +64,8 @@ def sincronizar_hora_ntp():
 # 3. ADQUISICIÓN Y FILTRADO ESTADÍSTICO
 # ==========================================
 def leer_adc_con_calidad(adc_obj, muestras=11):
+    if muestras <= 0:
+        raise ValueError("muestras debe ser mayor o igual a 1")
     lecturas = []
     for _ in range(muestras):
         lecturas.append(adc_obj.read())
@@ -184,11 +186,11 @@ def enviar_con_reintentos(payload_dict):
     json_data = ujson.dumps(payload_dict)
     
     for intento in range(1, 4):
+        res = None
         try:
             res = urequests.post(config.API_URL, data=json_data, headers=headers)
             codigo = res.status_code
             texto = res.text
-            res.close()
             
             if codigo in (200, 201, 409):
                 print(f"[Seq #{payload_dict['sequence_number']}] Entregado al Backend (HTTP {codigo})")
@@ -197,6 +199,12 @@ def enviar_con_reintentos(payload_dict):
                 print(f"Backend rechazó o falló (HTTP {codigo}): {texto}")
         except Exception as e:
             print(f"Fallo de red en intento {intento}/3:", e)
+        finally:
+            if res is not None:
+                try:
+                    res.close()
+                except Exception:
+                    pass
         
         time.sleep(intento * 2)
         
@@ -205,85 +213,94 @@ def enviar_con_reintentos(payload_dict):
 # ==========================================
 # 7. BUCLE PRINCIPAL DE EJECUCIÓN
 # ==========================================
-print("\n=== NODO NARVAL EDGE INICIADO ===")
+def ejecutar_ciclo():
+    """Ejecuta una iteración completa de lectura, validación atómica y transmisión/encolado."""
+    gc.collect()
+    seq_actual = obtener_siguiente_secuencia()
+    timestamp_captura = obtener_timestamp_iso()
 
-while True:
-    try:
-        gc.collect()
-        seq_actual = obtener_siguiente_secuencia()
-        timestamp_captura = obtener_timestamp_iso()
+    # 1. Adquisición y Filtrado
+    ph_raw, v_pin_ph, v_sens_ph, disp_ph = leer_adc_con_calidad(adc_ph)
+    turb_raw, v_pin_turb, v_sens_turb, disp_turb = leer_adc_con_calidad(adc_turbidez)
+    temp_c, err_temp = leer_temperatura_ds18b20()
 
-        # 1. Adquisición y Filtrado
-        ph_raw, v_pin_ph, v_sens_ph, disp_ph = leer_adc_con_calidad(adc_ph)
-        turb_raw, v_pin_turb, v_sens_turb, disp_turb = leer_adc_con_calidad(adc_turbidez)
-        temp_c, err_temp = leer_temperatura_ds18b20()
+    # 2. Calibración / Conversión (Con límites corregidos)
+    ph_val = convertir_ph(v_sens_ph)
+    turb_ntu = convertir_turbidez(v_sens_turb)
 
-        # 2. Calibración / Conversión (Con límites corregidos)
-        ph_val = convertir_ph(v_sens_ph)
-        turb_ntu = convertir_turbidez(v_sens_turb)
+    # 3. Validación Local de Calidad del Dato
+    q_status, q_flags = validar_calidad_medicion(
+        ph_val, turb_ntu, temp_c, ph_raw, turb_raw, disp_ph, disp_turb, err_temp
+    )
 
-        # 3. Validación Local de Calidad del Dato
-        q_status, q_flags = validar_calidad_medicion(
-            ph_val, turb_ntu, temp_c, ph_raw, turb_raw, disp_ph, disp_turb, err_temp
-        )
+    # 4. Regla Atómica "Todo o Nada":
+    # Si hay SENSOR_ERROR o INVALID en cualquiera, NO pasa ningún dato numérico al dashboard,
+    # solo viajan los quality_flags con la alarma técnica y los valores raw para diagnóstico.
+    pasan_datos = q_status in ("VALID", "SUSPECT")
 
-        # 4. Regla Atómica "Todo o Nada":
-        # Si hay SENSOR_ERROR o INVALID en cualquiera, NO pasa ningún dato numérico al dashboard,
-        # solo viajan los quality_flags con la alarma técnica y los valores raw para diagnóstico.
-        pasan_datos = q_status in ("VALID", "SUSPECT")
-
-        payload = {
-            "schema_version": config.SCHEMA_VERSION,
-            "device_id": config.DEVICE_ID,
-            "sequence_number": seq_actual,
-            "firmware_version": config.FIRMWARE_VERSION,
-            "captured_at": timestamp_captura,
-            "quality_status": q_status,
-            "quality_flags": q_flags,
-            "measurements": {
-                "ph": ph_val if pasan_datos else None,
-                "turbidity_ntu": turb_ntu if pasan_datos else None,
-                "temperature_c": temp_c if pasan_datos else None,
-                "ph_raw": ph_raw,
-                "turbidity_raw": turb_raw
-            }
+    payload = {
+        "schema_version": config.SCHEMA_VERSION,
+        "device_id": config.DEVICE_ID,
+        "sequence_number": seq_actual,
+        "firmware_version": config.FIRMWARE_VERSION,
+        "captured_at": timestamp_captura,
+        "quality_status": q_status,
+        "quality_flags": q_flags,
+        "measurements": {
+            "ph": ph_val if pasan_datos else None,
+            "turbidity_ntu": turb_ntu if pasan_datos else None,
+            "temperature_c": temp_c if pasan_datos else None,
+            "ph_raw": ph_raw,
+            "turbidity_raw": turb_raw
         }
+    }
 
-        # 5. Monitoreo en Consola Local
-        wlan = network.WLAN(network.STA_IF)
-        info_wifi = f"Wi-Fi OK ({wlan.ifconfig()[0]})" if wlan.isconnected() else "Sin Wi-Fi"
+    # 5. Monitoreo en Consola Local
+    wlan = network.WLAN(network.STA_IF)
+    info_wifi = f"Wi-Fi OK ({wlan.ifconfig()[0]})" if wlan.isconnected() else "Sin Wi-Fi"
 
-        print("\n--------------------------------------------------")
-        print(f"Lectura #{seq_actual} | Hora: {timestamp_captura} | 📡 {info_wifi}")
-        print(f"Calidad Dato: {q_status} | Flags: {q_flags}")
-        print(f"Temp: {temp_c} °C")
-        print(f"pH:   {ph_val} (Raw: {ph_raw} | V_Sensor: {v_sens_ph}V | Ruido: {disp_ph})")
-        print(f"Turb: {turb_ntu} UNT (Raw: {turb_raw} | V_Sensor: {v_sens_turb}V | Ruido: {disp_turb})")
-        print(f"JSON: {ujson.dumps(payload)}")
+    print("\n--------------------------------------------------")
+    print(f"Lectura #{seq_actual} | Hora: {timestamp_captura} | 📡 {info_wifi}")
+    print(f"Calidad Dato: {q_status} | Flags: {q_flags}")
+    print(f"Temp: {temp_c} °C")
+    print(f"pH:   {ph_val} (Raw: {ph_raw} | V_Sensor: {v_sens_ph}V | Ruido: {disp_ph})")
+    print(f"Turb: {turb_ntu} UNT (Raw: {turb_raw} | V_Sensor: {v_sens_turb}V | Ruido: {disp_turb})")
+    print(f"JSON: {ujson.dumps(payload)}")
 
-        # 6. Transmisión y Gestión de Cola Anti-Pérdida de Datos
-        if config.ENVIAR_A_BACKEND:
-            if conectar_wifi():
-                exito = enviar_con_reintentos(payload)
-                if not exito:
-                    if len(cola_pendientes) < config.MAX_COLA:
-                        cola_pendientes.append(payload)
-                        print(f"Guardado en cola local. Pendientes: {len(cola_pendientes)}")
-                else:
-                    while len(cola_pendientes) > 0:
-                        viejo = cola_pendientes[0]
-                        if enviar_con_reintentos(viejo):
-                            cola_pendientes.pop(0)
-                            print(f"Recuperado de cola Seq #{viejo['sequence_number']}")
-                        else:
-                            break
-            else:
+    # 6. Transmisión y Gestión de Cola Anti-Pérdida de Datos
+    if config.ENVIAR_A_BACKEND:
+        if conectar_wifi():
+            exito = enviar_con_reintentos(payload)
+            if not exito:
                 if len(cola_pendientes) < config.MAX_COLA:
                     cola_pendientes.append(payload)
-                    print(f"Sin Wi-Fi. Guardado en cola local ({len(cola_pendientes)}/{config.MAX_COLA})")
+                    print(f"Guardado en cola local. Pendientes: {len(cola_pendientes)}")
+            else:
+                while len(cola_pendientes) > 0:
+                    viejo = cola_pendientes[0]
+                    if enviar_con_reintentos(viejo):
+                        cola_pendientes.pop(0)
+                        print(f"Recuperado de cola Seq #{viejo['sequence_number']}")
+                    else:
+                        break
+        else:
+            if len(cola_pendientes) < config.MAX_COLA:
+                cola_pendientes.append(payload)
+                print(f"Sin Wi-Fi. Guardado en cola local ({len(cola_pendientes)}/{config.MAX_COLA})")
 
-        time.sleep(config.INTERVALO_SEGUNDOS)
+    return payload
 
-    except Exception as e:
-        print("Error crítico en bucle principal:", e)
-        time.sleep(3)
+
+def run_loop():
+    print("\n=== NODO NARVAL EDGE INICIADO ===")
+    while True:
+        try:
+            ejecutar_ciclo()
+            time.sleep(config.INTERVALO_SEGUNDOS)
+        except Exception as e:
+            print("Error crítico en bucle principal:", e)
+            time.sleep(3)
+
+
+if __name__ == "__main__":
+    run_loop()

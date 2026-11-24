@@ -34,7 +34,12 @@ class DeviceService:
             seconds_diff = None
             status = "OFFLINE"
             if dev.last_seen_at:
-                diff = (now - dev.last_seen_at).total_seconds()
+                last_seen = (
+                    dev.last_seen_at
+                    if dev.last_seen_at.tzinfo is not None
+                    else dev.last_seen_at.replace(tzinfo=timezone.utc)
+                )
+                diff = (now - last_seen).total_seconds()
                 seconds_diff = int(diff)
                 if seconds_diff <= offline_threshold_seconds:
                     status = "ONLINE"

@@ -40,7 +40,8 @@ export const ChartsView: React.FC<ChartsViewProps> = ({ measurements }) => {
         const val = getValue(m);
         if (val === null) return null;
         const x = padding + (idx / (sorted.length - 1)) * (width - 2 * padding);
-        const y = height - padding - ((val - minY) / (maxY - minY)) * (height - 2 * padding);
+        const clampedVal = Math.max(minY, Math.min(maxY, val));
+        const y = height - padding - ((clampedVal - minY) / (maxY - minY)) * (height - 2 * padding);
         return { x, y, val };
       })
       .filter((p): p is { x: number; y: number; val: number } => p !== null);
@@ -146,13 +147,13 @@ export const ChartsView: React.FC<ChartsViewProps> = ({ measurements }) => {
           '#d97706'
         )}
 
-        {/* Temperature Chart (range 5 to 35 °C) */}
+        {/* Gráfico de Temperatura (rango 0 a 45 °C para cubrir zonas de alerta y crítico) */}
         {renderLineChart(
           'Temperatura',
           '°C',
           (m) => m.temperature_celsius,
-          10.0,
-          35.0,
+          0.0,
+          45.0,
           10.0,
           30.0,
           '#10b981'
