@@ -52,12 +52,11 @@ Narval/
 │   ├── .env.example             # Plantilla de variables para el frontend
 │   └── package.json
 │
-└── firmware/                    # Firmware MicroPython para microcontrolador ESP32
-    ├── boot.py                  # Arranque del microcontrolador y memoria
-    ├── main.py                  # Bucle continuo de adquisición y envío HTTP
-    ├── config.example.py        # Plantilla de configuración (Wi-Fi, URL, pines)
-    ├── sensors/                 # Drivers de hardware (pH ADC1, Turbidez ADC1, OneWire)
-    └── net/                     # Conector Wi-Fi y cliente HTTP con autenticación de token
+└── firmware/                    # Firmware MicroPython para microcontrolador ESP32 (D1 R32)
+    ├── boot.py                  # Arranque, conexión Wi-Fi inicial y sincronización NTP
+    ├── config.example.py        # Plantilla de configuración (Wi-Fi, URL, pines y calibración)
+    ├── config.py                # Configuración activa local (ignorado en Git por seguridad)
+    └── main.py                  # Bucle continuo: filtrado de mediana (11 muestras), validación y cola FIFO
 ```
 
 ---
@@ -171,19 +170,19 @@ Narval/
    # Linux / macOS:
    cp config.example.py config.py
    ```
-2. Edita `firmware/config.py` con tu red Wi-Fi y la dirección de tu backend:
+2. Edita `firmware/config.py` con tus credenciales Wi-Fi y la dirección de tu backend:
    ```python
-   WIFI_SSID = "MiWiFi"
-   WIFI_PASSWORD = "MiPassword"
-   BACKEND_URL = "http://192.168.1.100:8000/api/v1/measurements"
-   DEVICE_TOKEN = "narval-esp32-secret-2026"  # Debe coincidir con DEVICE_INGESTION_SECRET del backend
+   WIFI_SSID = "TuWiFi"
+   WIFI_PASS = "TuPassword"
+   API_URL = "http://192.168.1.100:8000/api/v1/measurements"
+   DEVICE_SECRET = "narval_secret_token_2026_xyz"  # Debe coincidir con DEVICE_INGESTION_SECRET del backend
    ```
-3. Sube los archivos a tu ESP32 con [Thonny IDE](https://thonny.org/) o mediante `mpremote`:
+3. Carga los archivos (`boot.py`, `config.py` y `main.py`) a tu ESP32 con [Thonny IDE](https://thonny.org/) o mediante `mpremote`:
    ```bash
    pip install mpremote
-   mpremote connect COM3 cp -r . :
+   mpremote connect COM7 cp boot.py config.py main.py :
    ```
-4. Reinicia el ESP32. El dispositivo conectará a la red Wi-Fi y transmitirá las lecturas de los sensores al backend cada 10 segundos.
+4. Reinicia el ESP32. El dispositivo sincronizará la hora con `pool.ntp.org` y comenzará a transmitir las mediciones con filtrado de mediana al backend cada 5 segundos.
 
 ---
 

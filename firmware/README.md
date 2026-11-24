@@ -1,47 +1,43 @@
-# Firmware MicroPython para ESP32 — Narval
+# Firmware MicroPython para ESP32 — Narval (Producción)
 
-Este directorio contiene el firmware modular para el microcontrolador **ESP32 DevKit V1**, encargado de adquirir las señales de los sensores físicos, filtrar anomalías y transmitirlas mediante HTTP al backend de Narval.
+Firmware de adquisición, filtrado estadístico y transmisión para microcontrolador **ESP32 (Placa D1 R32)** en acueductos rurales.
 
 ## Estructura
 
 ```
 firmware/
-├── boot.py              # Inicialización del microcontrolador y memoria
-├── main.py              # Bucle de muestreo, empaque JSON y envío periódico
-├── config.example.py    # Plantilla de configuración (Wi-Fi, URL, pines, calibración)
-├── sensors/
-│   ├── ph.py            # Lectura del electrodo de pH sobre ADC1 (GPIO 35)
-│   ├── turbidity.py     # Lectura del sensor óptico sobre ADC1 (GPIO 34)
-│   └── temperature.py   # Lectura de la sonda digital DS18B20 OneWire (GPIO 4)
-└── net/
-    ├── wifi.py          # Gestor de conexión Wi-Fi con auto-reconexión
-    └── http_client.py   # Envío seguro con header 'X-Device-Token'
+├── boot.py              # Inicialización de hardware, conexión Wi-Fi inicial y sincronización horaria NTP
+├── config.example.py    # Plantilla de configuración (Wi-Fi, URL del backend, pines y calibración)
+├── config.py            # Configuración real activa (ignorado en Git por seguridad)
+├── main.py              # Bucle continuo: filtrado de mediana (11 muestras), validación atómica y cola FIFO
+└── seq.txt              # Contador de persistencia de secuencia de paquetes (generado automáticamente)
 ```
 
-## Preparación y Puesta en Marcha
+## Pines y Hardware Validado (ESP32 D1 R32)
 
-1. **Instalar MicroPython en el ESP32:**
-   Descarga el firmware oficial desde [micropython.org](https://micropython.org/download/ESP32_GENERIC/) y flashea tu placa con `esptool`:
-   ```bash
-   esptool.py --chip esp32 --port COM3 erase_flash
-   esptool.py --chip esp32 --port COM3 write_flash -z 0x1000 ESP32_GENERIC-*.bin
-   ```
+| Sensor / Periférico | Pin ESP32 | Modo / Protocolo | Observaciones |
+|---|---|---|---|
+| **Turbidez Óptica** | IO36 (ADC1_0) | Analógico 0-3.3V (ADC 12-bit) | Atenuación 11dB, divisor resistivo 10k/20k (factor 1.5) |
+| **Electrodo de pH** | IO34 (ADC1_6) | Analógico 0-3.3V (ADC 12-bit) | Atenuación 11dB, PH-4502C |
+| **DS18B20 Temperatura** | IO26 | Digital 1-Wire | Resistencia pull-up 4.7 kΩ a 3.3V |
 
-2. **Configurar Credenciales:**
-   Copia `config.example.py` a `config.py` y ajusta tus valores:
+## Características del Firmware
+
+1. **Filtrado Estadístico por Mediana:** Se toman 11 muestras consecutivas por cada canal analógico, ordenándolas para extraer la mediana y calcular la dispersión (detección de ruido/picos espurios).
+2. **Validación Atómica de Calidad ("Todo o Nada"):**
+   - Si un sensor presenta desconexión, saturación o lecturas físicas imposibles, se asigna estado `SENSOR_ERROR` o `INVALID` y se emiten banderas (`quality_flags`), bloqueando el paso de datos corruptos al dashboard.
+3. **Cola Local Anti-Pérdida (FIFO):**
+   - Si se interrumpe la conexión Wi-Fi o el backend no responde, las lecturas se acumulan en memoria (hasta 50 paquetes) y se retransmiten en orden cronológico en cuanto se restablece la comunicación.
+4. **Sincronización NTP:** Marcas de tiempo en formato ISO 8601 UTC sincronizadas con `pool.ntp.org`.
+5. **Autenticación en Ingesta:** Encabezados HTTP `X-Device-ID` y `X-Device-Secret` validados contra el backend de FastAPI.
+
+## Puesta en Marcha
+
+1. Copiar `config.example.py` a `config.py` y configurar la red Wi-Fi y la URL del backend:
    ```python
    WIFI_SSID = "TuWiFi"
-   WIFI_PASSWORD = "TuPassword"
-   BACKEND_URL = "http://<IP-DE-TU-SERVIDOR>:8000/api/v1/measurements"
-   DEVICE_TOKEN = "narval_secret_token_2026_xyz"
+   WIFI_PASS = "TuPassword"
+   API_URL = "http://192.168.1.100:8000/api/v1/measurements"
+   DEVICE_SECRET = "narval_secret_token_2026_xyz"
    ```
-
-3. **Subir los Archivos al ESP32:**
-   Puedes usar [Thonny IDE](https://thonny.org/) o la herramienta `mpremote`:
-   ```bash
-   pip install mpremote
-   mpremote connect COM3 cp -r . :
-   ```
-
-4. **Ejecutar:**
-   Reinicia el ESP32. En la consola serie observarás el proceso de conexión Wi-Fi y los envíos HTTP periódicos `201 Created`.
+2. Cargar los archivos `boot.py`, `config.py` y `main.py` al ESP32 usando Thonny IDE o `mpremote`.

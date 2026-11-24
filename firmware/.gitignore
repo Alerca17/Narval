@@ -1,4 +1,9 @@
 # firmware/.gitignore
+# Ignorar configuración local con credenciales reales y estado de secuencia
 config.py
-*.pyc
+seq.txt
 __pycache__/
+*.py[cod]
+
+# Mantener la plantilla pública
+!config.example.py
