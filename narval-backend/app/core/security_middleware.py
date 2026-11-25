@@ -44,13 +44,34 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
                     headers={"Retry-After": str(retry_after)}
                 )
 
-        # 2. Body size limit check for IoT ingestion (64 KB max)
+        # 2. Validación de tamaño máximo de payload para ingesta IoT (64 KB máx.)
+        max_body_bytes = 65536
         content_length = request.headers.get("content-length")
-        if content_length and int(content_length) > 65536:
-            return JSONResponse(
-                status_code=413,
-                content={"detail": "Payload demasiado grande. Límite máximo: 64 KB."}
-            )
+        if content_length is not None:
+            try:
+                parsed_length = int(content_length)
+            except ValueError:
+                return JSONResponse(
+                    status_code=400,
+                    content={"detail": "Header Content-Length inválido."},
+                )
+            if parsed_length < 0:
+                return JSONResponse(
+                    status_code=400,
+                    content={"detail": "Header Content-Length inválido."},
+                )
+            if parsed_length > max_body_bytes:
+                return JSONResponse(
+                    status_code=413,
+                    content={"detail": "Payload demasiado grande. Límite máximo: 64 KB."},
+                )
+        elif request.method in ("POST", "PUT", "PATCH"):
+            body = await request.body()
+            if len(body) > max_body_bytes:
+                return JSONResponse(
+                    status_code=413,
+                    content={"detail": "Payload demasiado grande. Límite máximo: 64 KB."},
+                )
 
         # 3. Process request
         response: Response = await call_next(request)

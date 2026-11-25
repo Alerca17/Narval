@@ -49,4 +49,5 @@ def conectar_wifi_inicial():
         print("Sin conexión Wi-Fi. Verifica que la red sea 2.4GHz.")
         return False
 
-conectar_wifi_inicial()
+if __name__ == "__main__":
+    conectar_wifi_inicial()

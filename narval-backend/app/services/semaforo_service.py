@@ -205,8 +205,8 @@ class VirtualSemaforoEngine:
                 notes="Esperando primera transmisión de datos del dispositivo ESP32."
             )
 
-        is_ph_calibrated = measurement.calibration_status == "CALIBRATED" and measurement.ph_value is not None
-        is_turbidity_calibrated = measurement.calibration_status == "CALIBRATED" and measurement.turbidity_value is not None
+        is_ph_calibrated = measurement.ph_value is not None
+        is_turbidity_calibrated = measurement.turbidity_value is not None
 
         ph_eval = cls.evaluate_ph(measurement.ph_value, measurement.ph_voltage, is_ph_calibrated)
         turb_eval = cls.evaluate_turbidity(measurement.turbidity_value, measurement.turbidity_voltage, is_turbidity_calibrated)
