@@ -1,4 +1,4 @@
-# main.py - Firmware Principal Proyecto Narval MVP (Producción)
+# main.py - Firmware Principal Proyecto Narval MVP (Producción v1.1)
 import machine
 import onewire
 import ds18x20
@@ -55,17 +55,16 @@ def obtener_timestamp_iso():
 
 def sincronizar_hora_ntp():
     try:
+        ntptime.timeout = 5
         ntptime.settime()
-        print("Reloj sincronizado UTC:", obtener_timestamp_iso())
+        print("[NTP] Reloj sincronizado UTC:", obtener_timestamp_iso())
     except Exception as e:
-        print("No se pudo sincronizar NTP (usando reloj interno):", e)
+        print("[NTP] Nota: NTP no disponible (se mantiene reloj RTC interno):", e)
 
 # ==========================================
 # 3. ADQUISICIÓN Y FILTRADO ESTADÍSTICO
 # ==========================================
 def leer_adc_con_calidad(adc_obj, muestras=11):
-    if muestras <= 0:
-        raise ValueError("muestras debe ser mayor o igual a 1")
     lecturas = []
     for _ in range(muestras):
         lecturas.append(adc_obj.read())
@@ -159,22 +158,35 @@ def validar_calidad_medicion(ph, turb, temp, ph_raw, turb_raw, disp_ph, disp_tur
     return status, flags
 
 # ==========================================
-# 6. RED WI-FI, RETRIES Y ENVÍO SEGURO
+# 6. RED WI-FI ROBUSTA Y ENVÍO SEGURO
 # ==========================================
-def conectar_wifi():
+def conectar_wifi(reintentos=20):
     wlan = network.WLAN(network.STA_IF)
     wlan.active(True)
+    
+    try:
+        wlan.config(pm=0)
+    except Exception:
+        pass
+
     if wlan.isconnected():
         return True
-    print(f"Reconectando a Wi-Fi '{config.WIFI_SSID}'...")
+
+    print(f"[Wi-Fi] Conectando a red '{config.WIFI_SSID}'...")
+    try:
+        wlan.disconnect()
+        time.sleep_ms(200)
+    except Exception:
+        pass
+
     wlan.connect(config.WIFI_SSID, config.WIFI_PASS)
-    for _ in range(20):
+    for _ in range(reintentos):
         if wlan.isconnected():
-            print("Wi-Fi Conectado! IP:", wlan.ifconfig()[0])
-            sincronizar_hora_ntp()
+            print(f"[Wi-Fi] Conexión establecida! IP: {wlan.ifconfig()[0]}")
             return True
         time.sleep(0.5)
-    print("Sin conexión Wi-Fi.")
+
+    print("[Wi-Fi] Advertencia: No se pudo conectar a la red Wi-Fi en este ciclo.")
     return False
 
 def enviar_con_reintentos(payload_dict):
@@ -184,10 +196,11 @@ def enviar_con_reintentos(payload_dict):
         "X-Device-Secret": config.DEVICE_SECRET
     }
     json_data = ujson.dumps(payload_dict)
+    res = None
     
     for intento in range(1, 4):
-        res = None
         try:
+            gc.collect()
             res = urequests.post(config.API_URL, data=json_data, headers=headers)
             codigo = res.status_code
             texto = res.text
@@ -196,22 +209,23 @@ def enviar_con_reintentos(payload_dict):
                 print(f"[Seq #{payload_dict['sequence_number']}] Entregado al Backend (HTTP {codigo})")
                 return True
             else:
-                print(f"Backend rechazó o falló (HTTP {codigo}): {texto}")
+                print(f"Backend rechazó (HTTP {codigo}): {texto}")
         except Exception as e:
-            print(f"Fallo de red en intento {intento}/3:", e)
+            print(f"Fallo de conexión en intento {intento}/3 ({config.API_URL}):", e)
         finally:
-            if res is not None:
+            if res:
                 try:
                     res.close()
                 except Exception:
                     pass
+                res = None
         
         time.sleep(intento * 2)
         
     return False
 
 # ==========================================
-# 7. BUCLE PRINCIPAL DE EJECUCIÓN
+# 7. BUCLE PRINCIPAL DE EJECUCIÓN (30 - 45 MIN)
 # ==========================================
 def ejecutar_ciclo():
     """Ejecuta una iteración completa de lectura, validación atómica y transmisión/encolado."""
@@ -219,12 +233,12 @@ def ejecutar_ciclo():
     seq_actual = obtener_siguiente_secuencia()
     timestamp_captura = obtener_timestamp_iso()
 
-    # 1. Adquisición y Filtrado
+    # 1. Adquisición y Filtrado Estadístico
     ph_raw, v_pin_ph, v_sens_ph, disp_ph = leer_adc_con_calidad(adc_ph)
     turb_raw, v_pin_turb, v_sens_turb, disp_turb = leer_adc_con_calidad(adc_turbidez)
     temp_c, err_temp = leer_temperatura_ds18b20()
 
-    # 2. Calibración / Conversión (Con límites corregidos)
+    # 2. Calibración / Conversión Física
     ph_val = convertir_ph(v_sens_ph)
     turb_ntu = convertir_turbidez(v_sens_turb)
 
@@ -233,9 +247,7 @@ def ejecutar_ciclo():
         ph_val, turb_ntu, temp_c, ph_raw, turb_raw, disp_ph, disp_turb, err_temp
     )
 
-    # 4. Regla Atómica "Todo o Nada":
-    # Si hay SENSOR_ERROR o INVALID en cualquiera, NO pasa ningún dato numérico al dashboard,
-    # solo viajan los quality_flags con la alarma técnica y los valores raw para diagnóstico.
+    # 4. Regla Atómica "Todo o Nada"
     pasan_datos = q_status in ("VALID", "SUSPECT")
 
     payload = {
@@ -255,7 +267,7 @@ def ejecutar_ciclo():
         }
     }
 
-    # 5. Monitoreo en Consola Local
+    # 5. Monitoreo en Consola Serie
     wlan = network.WLAN(network.STA_IF)
     info_wifi = f"Wi-Fi OK ({wlan.ifconfig()[0]})" if wlan.isconnected() else "Sin Wi-Fi"
 
@@ -265,9 +277,8 @@ def ejecutar_ciclo():
     print(f"Temp: {temp_c} °C")
     print(f"pH:   {ph_val} (Raw: {ph_raw} | V_Sensor: {v_sens_ph}V | Ruido: {disp_ph})")
     print(f"Turb: {turb_ntu} UNT (Raw: {turb_raw} | V_Sensor: {v_sens_turb}V | Ruido: {disp_turb})")
-    print(f"JSON: {ujson.dumps(payload)}")
 
-    # 6. Transmisión y Gestión de Cola Anti-Pérdida de Datos
+    # 6. Transmisión y Cola Anti-Pérdida
     if config.ENVIAR_A_BACKEND:
         if conectar_wifi():
             exito = enviar_con_reintentos(payload)
@@ -290,17 +301,21 @@ def ejecutar_ciclo():
 
     return payload
 
-
 def run_loop():
-    print("\n=== NODO NARVAL EDGE INICIADO ===")
+    print("\n=== NODO NARVAL EDGE INICIADO (v1.1) ===")
+    intervalo_segundos = getattr(config, "INTERVALO_SEGUNDOS", 1800)
+    minutos = intervalo_segundos // 60
+    print(f"Intervalo de captura configurado: {minutos} minutos ({intervalo_segundos} segundos)")
+
     while True:
         try:
             ejecutar_ciclo()
-            time.sleep(config.INTERVALO_SEGUNDOS)
+            print(f"\n[Ciclo Completado] Próxima lectura en {minutos} minutos...")
+            for _ in range(0, intervalo_segundos, 5):
+                time.sleep(5)
         except Exception as e:
             print("Error crítico en bucle principal:", e)
-            time.sleep(3)
-
+            time.sleep(5)
 
 if __name__ == "__main__":
     run_loop()

@@ -15,7 +15,11 @@ from app.core.database import get_db
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Ensure tables exist on startup if not already created
-    Base.metadata.create_all(bind=engine)
+    try:
+        Base.metadata.create_all(bind=engine)
+    except Exception as e:
+        print(f"[Advertencia DB] No se pudo conectar a la base de datos al arrancar ({e}).")
+        print("[Aviso] Si usas Supabase, verifica que tu proyecto no esté pausado o actualiza DATABASE_URL en .env.")
     yield
 
 app = FastAPI(

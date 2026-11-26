@@ -10,13 +10,13 @@ WIFI_SSID = "TU_RED_WIFI"
 WIFI_PASS = "TU_PASSWORD_WIFI"
 
 # --- ENDPOINT DEL BACKEND FASTAPI ---
-# IP de tu computador en la red local o dominio del servidor (ej. http://192.168.1.100:8000/api/v1/measurements)
-API_URL = "http://192.168.1.100:8000/api/v1/measurements"
+# IP de tu computador en la red local o dominio del servidor (ej. http://192.168.1.64:8000/api/v1/measurements)
+API_URL = "http://192.168.1.64:8000/api/v1/measurements"
 
 # --- IDENTIDAD Y SEGURIDAD DEL DISPOSITIVO ---
 DEVICE_ID = "NARVAL-001"
 DEVICE_SECRET = "narval_secret_token_2026_xyz"  # Debe coincidir con DEVICE_INGESTION_SECRET del backend
-FIRMWARE_VERSION = "1.0.0"
+FIRMWARE_VERSION = "1.1.0"
 SCHEMA_VERSION = "1.0"
 
 # --- PINES FÍSICOS VALIDADOS (Placa ESP32 D1 R32) ---
@@ -31,6 +31,7 @@ PENDIENTE_PH = -3.50          # Pendiente calibrada
 VOLTAJE_BASE_AGUA = 2.34      # Voltaje base calibrado para sensor de turbidez
 
 # --- PARÁMETROS DE OPERACIÓN Y COLA ANTI-PÉRDIDA ---
-INTERVALO_SEGUNDOS = 5
+INTERVALO_MINUTOS = 30        # Intervalo estándar: 30 minutos (ajustable a 45)
+INTERVALO_SEGUNDOS = INTERVALO_MINUTOS * 60
 MAX_COLA = 50
 ARCHIVO_SEQ = "seq.txt"

@@ -117,12 +117,30 @@ function Header({ title, eyebrow }: { title: string; eyebrow: string }) {
   );
 }
 
-function HomeScreen({ goTo, metrics, latest, semaforo, history }: {
+function HomeScreen({
+  goTo,
+  metrics,
+  latest,
+  semaforo,
+  history,
+  analysis,
+  aiLoading,
+  aiError,
+  structuredError,
+  requestAnalysis,
+  hasSensorAlerts,
+}: {
   goTo: (view: View) => void;
   metrics: { label: string; value: string; unit: string; range: string; icon: IconName; color: string }[];
-  latest: { device_code?: string; received_at?: string } | null;
+  latest: Measurement | null;
   semaforo: VirtualSemaforo | null;
   history: Measurement[];
+  analysis: AIAnalysis | null;
+  aiLoading: boolean;
+  aiError: string | null;
+  structuredError: SensorErrorDetail | null;
+  requestAnalysis: (measurementId?: number, count?: number) => void;
+  hasSensorAlerts: boolean;
 }) {
   const deviceCode = latest?.device_code || 'Esperando dispositivo';
 
@@ -147,6 +165,18 @@ function HomeScreen({ goTo, metrics, latest, semaforo, history }: {
 
       <div className="section-heading"><div><span className="eyebrow">Lecturas disponibles</span><h2>Calidad del agua</h2></div></div>
       <section className="metrics-grid">{metrics.map((metric) => <MetricCard key={metric.label} metric={metric} />)}</section>
+
+      <section className="home-ai-section" style={{ marginTop: '1.5rem', marginBottom: '1.5rem' }}>
+        <AIPanel
+          analysis={analysis}
+          loading={aiLoading}
+          error={aiError}
+          structuredError={structuredError}
+          onRequestAnalysis={() => requestAnalysis(latest?.id, 5)}
+          hasMeasurements={Boolean(latest)}
+          hasSensorAlerts={hasSensorAlerts}
+        />
+      </section>
 
       <section className="home-bottom">
         <article className="panel chart-panel">
@@ -381,7 +411,21 @@ export default function App() {
           </div>
         )}
 
-        {view === 'inicio' && <HomeScreen goTo={navigate} metrics={metrics} latest={latest} semaforo={semaforo} history={history} />}
+        {view === 'inicio' && (
+          <HomeScreen
+            goTo={navigate}
+            metrics={metrics}
+            latest={latest}
+            semaforo={semaforo}
+            history={history}
+            analysis={currentAnalysis}
+            aiLoading={aiLoading}
+            aiError={aiError}
+            structuredError={structuredError}
+            requestAnalysis={requestAnalysis}
+            hasSensorAlerts={hasSensorAlerts}
+          />
+        )}
         {view === 'metricas' && <MetricsScreen metrics={metrics} history={history} latest={latest} />}
         {view === 'alertas' && (
           <AlertsScreen

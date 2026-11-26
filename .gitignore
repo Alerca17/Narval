@@ -35,6 +35,10 @@ narval-frontend/.env.local
 !narval-backend/.env.example
 !narval-frontend/.env.example
 
+# Database
+*.db
+*.sqlite3
+
 # IDE & OS
 .vscode/
 .idea/
