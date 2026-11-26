@@ -13,6 +13,60 @@ interface AIPanelProps {
   hasSensorAlerts?: boolean;
 }
 
+const renderFormattedText = (text: string) => {
+  const lines = text.split('\n');
+  const elements: React.ReactNode[] = [];
+  let currentList: React.ReactNode[] = [];
+
+  const flushList = () => {
+    if (currentList.length > 0) {
+      elements.push(
+        <ul key={`ul-${elements.length}`} className="ai-markdown-list">
+          {currentList}
+        </ul>
+      );
+      currentList = [];
+    }
+  };
+
+  const parseInline = (str: string): React.ReactNode => {
+    const parts = str.split(/(\*\*.*?\*\*)/g);
+    return parts.map((part, i) => {
+      if (part.startsWith('**') && part.endsWith('**')) {
+        return <strong key={i}>{part.slice(2, -2)}</strong>;
+      }
+      return part;
+    });
+  };
+
+  lines.forEach((rawLine, idx) => {
+    const line = rawLine.trim();
+    if (!line) {
+      flushList();
+      return;
+    }
+
+    if (line.startsWith('### ')) {
+      flushList();
+      elements.push(<h4 key={idx} className="ai-markdown-h4">{parseInline(line.slice(4))}</h4>);
+    } else if (line.startsWith('#### ')) {
+      flushList();
+      elements.push(<h5 key={idx} className="ai-markdown-h5">{parseInline(line.slice(5))}</h5>);
+    } else if (line === '---' || line === '***') {
+      flushList();
+      elements.push(<hr key={idx} className="ai-markdown-divider" />);
+    } else if (line.startsWith('* ') || line.startsWith('- ')) {
+      currentList.push(<li key={`li-${idx}`}>{parseInline(line.slice(2))}</li>);
+    } else {
+      flushList();
+      elements.push(<p key={idx}>{parseInline(line)}</p>);
+    }
+  });
+
+  flushList();
+  return elements;
+};
+
 export const AIPanel: React.FC<AIPanelProps> = ({
   analysis,
   loading,
@@ -144,9 +198,7 @@ export const AIPanel: React.FC<AIPanelProps> = ({
           <div className="ai-body-box">
             <h4>Informe Descriptivo y Recomendaciones:</h4>
             <div className="ai-text-content">
-              {analysis.analysis_text.split('\n\n').map((paragraph, idx) => (
-                <p key={idx}>{paragraph}</p>
-              ))}
+              {renderFormattedText(analysis.analysis_text)}
             </div>
           </div>
 

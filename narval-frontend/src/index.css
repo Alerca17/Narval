@@ -453,6 +453,10 @@ img { max-width: 100%; display: block; }
 .ai-summary-box p,
 .ai-text-content p { margin: 0; color: #d1e8f4; font-size: 11px; line-height: 1.65; }
 .ai-text-content { display: grid; gap: 9px; }
+.ai-text-content h4, .ai-text-content h5 { margin: 6px 0 2px 0; color: #a4effe; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+.ai-markdown-list { margin: 0; padding-left: 18px; color: #d1e8f4; font-size: 11px; line-height: 1.6; }
+.ai-markdown-list li { margin-bottom: 4px; }
+.ai-markdown-divider { border: 0; border-top: 1px solid rgba(139, 240, 255, 0.15); margin: 6px 0; }
 .ai-disclaimer-box { display: flex; align-items: flex-start; gap: 8px; color: #f4d791; }
 .ai-disclaimer-box svg { flex: 0 0 16px; }
 .ai-disclaimer-box p { margin: 0; color: #a9c5d5; font-size: 9px; line-height: 1.5; }
