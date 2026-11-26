@@ -1,0 +1,66 @@
+# Captura monitor serie COM6 @115200 - inicio 2026-11-25 21:57:04
+[21:57:05] 
+[21:57:05] >>> 
+[21:57:05] >>> 
+[21:57:05] MPY: soft reboot
+[21:57:05] 
+[21:57:05] ==================================================
+[21:57:05]  INICIANDO NODO EDGE: PROYECTO NARVAL MVP v1.1   
+[21:57:05] ==================================================
+[21:57:05] ¡Wi-Fi Conectado con éxito! IP del ESP32: 192.168.10.6
+[21:57:05] [NTP] Reloj sincronizado UTC: 2026-11-26T02:57:05Z
+[21:57:05] Sensores DS18B20 detectados en pin 26 : [bytearray(b'(\xd2B\xb2\x00\x00\x00H')]
+[21:57:05] 
+[21:57:05] === NODO NARVAL EDGE INICIADO (v1.1) ===
+[21:57:05] Intervalo de captura configurado: 45 segundos
+[21:57:06] 
+[21:57:06] --------------------------------------------------
+[21:57:06] Lectura #216 | Hora: 2026-11-26T02:57:05Z | 📡 Wi-Fi OK (192.168.10.6)
+[21:57:06] Calidad Dato: VALID | Flags: []
+[21:57:06] Temp: 24.69 °C
+[21:57:06] pH:   7.39 (Raw: 3630 | V_Sensor: 4.388V | Ruido: 96)
+[21:57:06] Turb: 0.5 UNT (Raw: 4095 | V_Sensor: 4.95V | Ruido: 0)
+[21:57:07] [Seq #216] Entregado al Backend (HTTP 201)
+[21:57:07] 
+[21:57:07] [Ciclo Completado] Próxima lectura en 45 s...
+[21:57:53] 
+[21:57:53] --------------------------------------------------
+[21:57:53] Lectura #217 | Hora: 2026-11-26T02:57:52Z | 📡 Wi-Fi OK (192.168.10.6)
+[21:57:53] Calidad Dato: VALID | Flags: []
+[21:57:53] Temp: 24.69 °C
+[21:57:53] pH:   7.39 (Raw: 3631 | V_Sensor: 4.389V | Ruido: 88)
+[21:57:53] Turb: 0.5 UNT (Raw: 4095 | V_Sensor: 4.95V | Ruido: 0)
+[21:57:53] [Seq #217] Entregado al Backend (HTTP 201)
+[21:57:53] 
+[21:57:53] [Ciclo Completado] Próxima lectura en 45 s...
+[21:58:40] 
+[21:58:40] --------------------------------------------------
+[21:58:40] Lectura #218 | Hora: 2026-11-26T02:58:38Z | 📡 Wi-Fi OK (192.168.10.6)
+[21:58:40] Calidad Dato: VALID | Flags: []
+[21:58:40] Temp: 24.69 °C
+[21:58:40] pH:   7.38 (Raw: 3633 | V_Sensor: 4.392V | Ruido: 116)
+[21:58:40] Turb: 0.5 UNT (Raw: 4095 | V_Sensor: 4.95V | Ruido: 0)
+[21:58:40] [Seq #218] Entregado al Backend (HTTP 201)
+[21:58:40] 
+[21:58:40] [Ciclo Completado] Próxima lectura en 45 s...
+[21:59:26] 
+[21:59:26] --------------------------------------------------
+[21:59:26] Lectura #219 | Hora: 2026-11-26T02:59:25Z | 📡 Wi-Fi OK (192.168.10.6)
+[21:59:26] Calidad Dato: VALID | Flags: []
+[21:59:26] Temp: 24.62 °C
+[21:59:26] pH:   7.46 (Raw: 3614 | V_Sensor: 4.369V | Ruido: 60)
+[21:59:26] Turb: 0.5 UNT (Raw: 4095 | V_Sensor: 4.95V | Ruido: 0)
+[21:59:26] [Seq #219] Entregado al Backend (HTTP 201)
+[21:59:26] 
+[21:59:26] [Ciclo Completado] Próxima lectura en 45 s...
+[22:00:13] 
+[22:00:13] --------------------------------------------------
+[22:00:13] Lectura #220 | Hora: 2026-11-26T03:00:11Z | 📡 Wi-Fi OK (192.168.10.6)
+[22:00:13] Calidad Dato: VALID | Flags: []
+[22:00:13] Temp: 24.62 °C
+[22:00:13] pH:   7.37 (Raw: 3634 | V_Sensor: 4.393V | Ruido: 63)
+[22:00:13] Turb: 0.5 UNT (Raw: 4095 | V_Sensor: 4.95V | Ruido: 0)
+[22:00:13] [Seq #220] Entregado al Backend (HTTP 201)
+[22:00:13] 
+[22:00:13] [Ciclo Completado] Próxima lectura en 45 s...
+# Fin captura 2026-11-25 22:00:25

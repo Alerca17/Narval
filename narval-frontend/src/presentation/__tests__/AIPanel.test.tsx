@@ -70,4 +70,36 @@ describe('AIPanel (CP-M7-03)', () => {
     expect(screen.getByText(/Agua dentro de rangos técnicos/i)).toBeInTheDocument();
     expect(screen.getByText(/Resolución 2115 de 2007/i)).toBeInTheDocument();
   });
+
+  it('renderiza el Markdown del informe de Gemini (títulos, viñetas, negritas y separadores) sin símbolos literales', () => {
+    const { container } = render(
+      <AIPanel
+        analysis={{
+          id: 10,
+          measurement_id: 2,
+          model_used: 'gemini-3.5-flash-lite',
+          summary: 'Parámetros dentro de rango',
+          analysis_text:
+            '### RESUMEN EJECUTIVO\nTexto inicial.\n\n---\n\n#### Detalle\n* **pH:** 7.39 dentro de rango.\n- **Turbidez:** 0.5 NTU.\n\nPárrafo final con **énfasis**.',
+          limitations_disclaimer: 'No constituye certificación oficial de potabilidad (Resolución 2115 de 2007).',
+          created_at: '2026-11-26T03:00:00Z',
+        }}
+        loading={false}
+        error={null}
+        structuredError={null}
+        onRequestAnalysis={vi.fn()}
+        hasMeasurements={true}
+      />
+    );
+
+    expect(screen.getByRole('heading', { name: 'RESUMEN EJECUTIVO' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Detalle' })).toBeInTheDocument();
+    expect(container.querySelector('hr.ai-markdown-divider')).not.toBeNull();
+    const items = container.querySelectorAll('ul.ai-markdown-list li');
+    expect(items).toHaveLength(2);
+    expect(items[0].querySelector('strong')?.textContent).toBe('pH:');
+    expect(screen.getByText('énfasis').tagName).toBe('STRONG');
+    expect(container.textContent).not.toContain('###');
+    expect(container.textContent).not.toContain('**');
+  });
 });

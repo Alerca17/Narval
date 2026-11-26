@@ -9,26 +9,11 @@ class DeviceService:
     def __init__(self, device_repo: DeviceRepository):
         self.device_repo = device_repo
 
-    def register_or_update(
-        self,
-        code: str,
-        name: Optional[str] = None,
-        firmware_version: Optional[str] = None,
-        raw_token: Optional[str] = None
-    ) -> Device:
+    def get_or_create_device(self, code: str, default_name: Optional[str] = None) -> Device:
         device = self.device_repo.get_by_code(code)
-        api_key_hash = hash_token(raw_token) if raw_token else None
-        
         if not device:
-            device_name = name or f"Estación {code}"
-            device = self.device_repo.create(
-                code=code,
-                name=device_name,
-                api_key_hash=api_key_hash,
-                firmware_version=firmware_version
-            )
-        else:
-            self.device_repo.update_ping(device, firmware_version)
+            name = default_name or f"Dispositivo {code}"
+            device = self.device_repo.create(code=code, name=name)
         return device
 
     def authenticate_device(self, code: str, token: str) -> bool:

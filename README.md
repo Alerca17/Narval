@@ -153,7 +153,7 @@ Narval/
 2. Ábrela y pégala en `narval-backend/.env`:
    ```env
    GEMINI_API_KEY="AIzaSyTuClaveAqui..."
-   GEMINI_MODEL="gemini-2.5-flash"
+   GEMINI_MODEL="gemini-3.5-flash-lite"
    ```
 3. Reinicia el backend. Al pulsar el botón **"Generar Análisis IA"** en la interfaz web, el sistema enviará los datos físicos persistidos al modelo Gemini.
 4. **Modo Contingencia:** Si no configuras la clave (`GEMINI_API_KEY=""`), el backend activará automáticamente su generador determinista local de respaldo sin interrumpir la operación ni arrojar errores al usuario.

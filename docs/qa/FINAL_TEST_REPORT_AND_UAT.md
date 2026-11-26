@@ -2,20 +2,21 @@
 
 > **Proyecto:** Narval — Monitoreo de Calidad del Agua para Acueductos Veredales
 > **Institución:** Politécnico Colombiano Jaime Isaza Cadavid — Ingeniería Informática (`ING01207 Proyecto Integrador`)
-> **Plan de Pruebas Base:** `MVP_IEEE829_Narval.docx`
-> **Fecha de emisión de resultados:** `24/11/2026`
+> **Plan de Pruebas Base:** `MVP_IEEE829_Narval.docx` / `PLT-QA-01` a `PLT-QA-10` (`docs/qa/entregables/`)
+> **Fecha de emisión de resultados:** `25/11/2026`
 
 ---
 
-## 1. Resumen Ejecutivo de Ejecución Automatizada (Resultados Reales)
+## 1. Resumen Ejecutivo de Ejecución Automatizada y HIL (Resultados Reales)
 
 | Subsistema | Herramienta / Entorno | Pruebas Ejecutadas | Aprobadas | Fallidas | Cobertura Obtenida | Umbral del Plan | Cumplimiento |
 | :--- | :--- | :---: | :---: | :---: | :---: | :---: | :---: |
-| **Backend API y Servicios** | `pytest 9.2.0` + `pytest-cov 7.1.0` (`Python 3.14.7`, BD SQLite aislada en memoria) | **63** | **63** | **0** | **96%** total (`servicios 87%–100%`, `seguridad 94%–100%`, `API 100%`, `repos 86%–100%`) | Servicios/Seg. `>= 85%`; API/Repos `>= 75%` | **CUMPLE** |
-| **Firmware IoT ESP32** | `pytest 9.2.0` + `pytest-cov 7.1.0` (mocks MicroPython `machine`, `onewire`, `ds18x20`, `network`, `urequests`) | **8** | **8** | **0** | **82%** total (`main.py 84%`, `boot.py 69%`) | Drivers/lógica `>= 70%` | **CUMPLE** |
-| **Frontend Semáforo Virtual** | `Vitest 4.1.12` + `@vitest/coverage-v8` + React Testing Library (`Node v26.12.0`) | **15** | **15** | **0** | **86.3%** sentencias / **88.61%** líneas (`hooks 90%`, `services 87.75%`, `presentation 94.11%`, `App.tsx 77.27%`) | Hooks/Servicios `>= 70%` | **CUMPLE** |
-| **Análisis Estático y Build Frontend** | `oxlint 1.88+`, `tsc -b`, `vite build` (`vite 8.3.5`) | Verificación completa | **OK** | **0 errores** | `0` errores (`5` advertencias preexistentes en código legado/hooks); bundle `dist/` generado en `1.83 s` | `0` errores de compilación/lint | **CUMPLE** |
-| **TOTAL AUTOMATIZADO** | **3 suites + pipeline CI (`.github/workflows/ci.yml`)** | **86** | **86 (100%)** | **0** | **82% – 96% según capa** | `>= 95%` aprobación global | **CUMPLE** |
+| **Backend API y Servicios** | `pytest 9.1.1` + `pytest-cov 7.1.0` (`Python 3.14.3`, BD SQLite aislada en memoria) | **63** | **63** | **0** | **93%** combinada (`95.86%` líneas, `API 100%`, `semáforo 100%`) | `>= 80%` | **CUMPLE** |
+| **Firmware IoT ESP32** | `pytest 9.1.1` + `pytest-cov 7.1.0` (mocks MicroPython + resiliencia Wi-Fi e intervalo 45 s) | **14** | **14** | **0** | **82.55% `main.py`** (`77.78%` total con `boot.py`) | `>= 70%` | **CUMPLE** |
+| **Frontend Semáforo Virtual** | `Vitest 4.1.12` + `@vitest/coverage-v8` + React Testing Library (`Node v22`) | **16** | **16** | **0** | **89.83%** líneas / **87.74%** sentencias (`AIPanel.tsx 100%`, `ChartsView.tsx 96.42%`) | `>= 80%` | **CUMPLE** |
+| **Análisis Estático y Build Frontend** | `oxlint 1.88+`, `tsc -b`, `vite build` (`vite 8.3.5`) | Verificación completa | **OK** | **0 errores** | `0` errores; bundle `dist/` generado en `0.87 s` | `0` errores de compilación/lint | **CUMPLE** |
+| **HIL en Vivo (`ESP32 D1 R32 COM6`)** | `mpremote` + monitor serie cada `45 s` hacia `http://192.168.1.64:8000` | **20+ ciclos reales** | **20+ (`HTTP 201`)** | **0** | `0` caídas Wi-Fi (`pm=0`), `pH 7.37–7.52`, `Turb 0.5 NTU`, `Temp 24.62–24.69 °C` | Ingesta continua sin caídas | **CUMPLE** |
+| **TOTAL AUTOMATIZADO CI** | **3 suites + pipeline CI (`.github/workflows/ci.yml`)** | **93** | **93 (100%)** | **0** | **77.8% – 95.8% según capa** | `>= 95%` aprobación global | **CUMPLE** |
 
 ### Artefactos de Evidencia Generados en el Repositorio
 

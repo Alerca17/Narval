@@ -12,7 +12,7 @@ La integración con Google Gemini se realiza exclusivamente a nivel de **Backend
       │ 2. Sanitiza y estructura los datos reales y umbrales (Res. 2115/2007)
       │ 3. Inyecta el system prompt de restricciones científicas
       ▼
-[ Google Gemini API (Model: gemini-2.5-flash) ]
+[ Google Gemini API (Model: gemini-3.5-flash-lite) ]
       │ 4. Genera informe explicativo estructurado (JSON / texto)
       ▼
 [ FastAPI Backend ]

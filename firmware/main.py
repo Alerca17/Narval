@@ -65,6 +65,8 @@ def sincronizar_hora_ntp():
 # 3. ADQUISICIÓN Y FILTRADO ESTADÍSTICO
 # ==========================================
 def leer_adc_con_calidad(adc_obj, muestras=11):
+    if muestras <= 0:
+        raise ValueError("muestras debe ser mayor o igual a 1")
     lecturas = []
     for _ in range(muestras):
         lecturas.append(adc_obj.read())
@@ -303,16 +305,16 @@ def ejecutar_ciclo():
 
 def run_loop():
     print("\n=== NODO NARVAL EDGE INICIADO (v1.1) ===")
-    intervalo_segundos = getattr(config, "INTERVALO_SEGUNDOS", 1800)
-    minutos = intervalo_segundos // 60
-    print(f"Intervalo de captura configurado: {minutos} minutos ({intervalo_segundos} segundos)")
+    intervalo_segundos = getattr(config, "INTERVALO_SEGUNDOS", 45)
+    print(f"Intervalo de captura configurado: {intervalo_segundos} segundos")
 
     while True:
         try:
             ejecutar_ciclo()
-            print(f"\n[Ciclo Completado] Próxima lectura en {minutos} minutos...")
-            for _ in range(0, intervalo_segundos, 5):
-                time.sleep(5)
+            print(f"\n[Ciclo Completado] Próxima lectura en {intervalo_segundos} s...")
+            # Espera en bloques de 1 s para permitir Ctrl+C inmediato desde Thonny
+            for _ in range(intervalo_segundos):
+                time.sleep(1)
         except Exception as e:
             print("Error crítico en bucle principal:", e)
             time.sleep(5)

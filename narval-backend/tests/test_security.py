@@ -101,6 +101,7 @@ def test_rate_limiter_unit_and_ai_endpoint_429(client, auth_headers):
 def test_settings_database_url_normalization_and_cors():
     """Valida normalización de URLs PostgreSQL, lista CORS y modelo Gemini por defecto (R-04)."""
     s = Settings(
+        _env_file=None,  # Aislamiento: no leer el .env local del desarrollador
         DATABASE_URL="postgresql://user:pass@host:5432/db",
         DIRECT_URL="postgresql://user:pass@host:5432/db",
         ALLOWED_ORIGINS="http://localhost:5173, https://narval.example.com ",
@@ -108,4 +109,4 @@ def test_settings_database_url_normalization_and_cors():
     assert s.DATABASE_URL.startswith("postgresql+psycopg://")
     assert s.DIRECT_URL.startswith("postgresql+psycopg://")
     assert s.cors_origins == ["http://localhost:5173", "https://narval.example.com"]
-    assert s.GEMINI_MODEL == "gemini-2.5-flash"
+    assert s.GEMINI_MODEL == "gemini-3.5-flash-lite"

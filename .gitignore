@@ -38,6 +38,8 @@ narval-frontend/.env.local
 # Database
 *.db
 *.sqlite3
+.coverage
+coverage/
 
 # IDE & OS
 .vscode/

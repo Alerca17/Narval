@@ -148,7 +148,7 @@
 {
   "analysis_id": 12,
   "measurement_id": 105,
-  "model_used": "gemini-2.5-flash",
+  "model_used": "gemini-3.5-flash-lite",
   "created_at": "2026-10-25T20:30:05Z",
   "summary": "Parámetros de pH y temperatura estables en rangos óptimos. Turbidez pendiente de curva de calibración.",
   "analysis_text": "Análisis contextual detallado basado en datos reales...",

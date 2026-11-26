@@ -138,7 +138,7 @@ erDiagram
 - `id`: Clave primaria.
 - `measurement_id`: Clave foránea referenciando la medición analizada.
 - `query_scope`: `'SINGLE'`, `'RECENT_BATCH'`.
-- `model_used`: Identificador del modelo Gemini (ej. `'gemini-2.5-flash'`).
+- `model_used`: Identificador del modelo Gemini (ej. `'gemini-3.5-flash-lite'`).
 - `analysis_text`: Informe descriptivo generado por Gemini.
 - `summary`: Resumen ejecutivo de 1-2 oraciones.
 - `limitations_disclaimer`: Cláusula explícita de limitaciones del análisis.

@@ -31,7 +31,6 @@ PENDIENTE_PH = -3.50          # Pendiente calibrada
 VOLTAJE_BASE_AGUA = 2.34      # Voltaje base calibrado para sensor de turbidez
 
 # --- PARÁMETROS DE OPERACIÓN Y COLA ANTI-PÉRDIDA ---
-INTERVALO_MINUTOS = 30        # Intervalo estándar: 30 minutos (ajustable a 45)
-INTERVALO_SEGUNDOS = INTERVALO_MINUTOS * 60
+INTERVALO_SEGUNDOS = 45       # Una lectura completa cada 45 s (ej. 1800 = 30 min en producción)
 MAX_COLA = 50
 ARCHIVO_SEQ = "seq.txt"
